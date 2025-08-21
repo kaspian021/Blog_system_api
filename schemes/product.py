@@ -1,12 +1,16 @@
+from datetime import date as date_type
 from typing import Optional,List
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class ProductBase(BaseModel):
     name:Optional[str]=None
     price:Optional[int]=None
-    date:Optional[str]=None
+    date:date_type
+    writer: str
+
+
 
 class ProductCreate(ProductBase):
     image_path: str
@@ -44,6 +48,10 @@ class ProductAllShow(BaseModel):
 
     class Config:
         from_attributes= True
+
+
+class ProductCategory(BaseModel):
+    category:str
 
 
 

@@ -1,14 +1,14 @@
 from fastapi import HTTPException, Depends, APIRouter
 from sqlalchemy.orm import Session
-from Tools.dependence import get_session
-from models import product as product
+from Tools.dependence import get_session,get_current_user_token
+from schemes import product as product
 from database.models_database import product as models_database
 
 
 routerProduct= APIRouter()
 
 @routerProduct.post('/product/create_products',response_model=product.ProductResponse)
-async def create_product(product_item:product.ProductCreate,db:Session =Depends(get_session)):
+async def create_product(product_item:product.ProductCreate,db:Session =Depends(get_session),current_user=Depends(get_current_user_token)):
     try:
         if product_item is not None:
             exist_database= db.query(models_database.Products).filter(
@@ -16,11 +16,11 @@ async def create_product(product_item:product.ProductCreate,db:Session =Depends(
             if exist_database:
                 raise HTTPException(status_code=400,detail='product with image_path already exist')
 
-            product= models_database.Products(**product_item.model_dump())
-            db.add(product)
+            product_result= models_database.Products(**product_item.model_dump())
+            db.add(product_result)
             db.commit()
-            db.refresh(product)
-            return product
+            db.refresh(product_result)
+            return product_result
 
     except HTTPException:
         raise
@@ -31,7 +31,7 @@ async def create_product(product_item:product.ProductCreate,db:Session =Depends(
 
 
 @routerProduct.get('/product/product_show/{product_id}',response_model=product.ProductShow)
-async def product_show(product_id:int,db:Session = Depends(get_session)):
+async def product_show(product_id:int,db:Session = Depends(get_session),current_user=Depends(get_current_user_token)):
     try:
         product_query= db.query(models_database.Products).filter(models_database.Products.id == product_id).first()
         db.add(product_query)
@@ -47,7 +47,7 @@ async def product_show(product_id:int,db:Session = Depends(get_session)):
 
 
 @routerProduct.put('/product/product_update')
-async def product_update(product_item:product.ProductUpdate,product_id:int,db: Session = Depends(get_session)):
+async def product_update(product_item:product.ProductUpdate,product_id:int,db: Session = Depends(get_session),current_user=Depends(get_current_user_token)):
     try:
         if product_id:
             query= db.query(models_database.Products).filter(models_database.Products.id == product_id).first()
@@ -76,7 +76,7 @@ async def product_update(product_item:product.ProductUpdate,product_id:int,db: S
 
 
 @routerProduct.get('/product/show_all_product',response_model=product.ProductAllShow)
-async def product_show_all(db:Session = Depends(get_session)):
+async def product_show_all(db:Session = Depends(get_session),current_user=Depends(get_current_user_token)):
     try:
         product_item= db.query(models_database.Products).all()
 
@@ -88,4 +88,45 @@ async def product_show_all(db:Session = Depends(get_session)):
     except Exception as e:
         print(e)
         raise HTTPException(status_code=500,detail=f'Error: {e}')
+
+
+@routerProduct.get('/product/show_best_product',response_model=product.ProductAllShow)
+async def product_show_best(db:Session = Depends(get_session),current_user=Depends(get_current_user_token)):
+    try:
+        product_item= db.query(models_database.Products).order_by(models_database.Products.like.desc()).all()
+
+        if not product_item:
+            return {'all_product': []}
+
+        return {'all_product': product_item}
+
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500,detail=f'Error: {e}')
+
+
+
+
+@routerProduct.post('/product_show_by_category',response_model=product.ProductAllShow)
+async def product_show_by_category(product_category:product.ProductCategory,db:Session = Depends(get_session),current_user=Depends(get_current_user_token)):
+    try:
+        query= db.query(models_database.Products).filter_by(category=product_category.category).all()
+        if not query:
+            raise HTTPException(status_code=404,detail='is not find category in database')
+
+
+        return {'all_product':query}
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500,detail='Error is Server')
+
+
+
+
+
+
 
