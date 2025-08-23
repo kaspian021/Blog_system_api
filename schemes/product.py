@@ -5,8 +5,8 @@ from pydantic import BaseModel, Field
 
 
 class ProductBase(BaseModel):
-    name:Optional[str]=None
-    price:Optional[int]=None
+    name:Optional[str]='Blog_system'
+    price:Optional[int]=0
     date:date_type
     writer: str
 
@@ -17,6 +17,7 @@ class ProductCreate(ProductBase):
     desc:str
     category:str
     like:int
+    owner_id: int
 
 
 class ProductShow(ProductBase):
@@ -25,14 +26,12 @@ class ProductShow(ProductBase):
     desc:str
     category:str
     like:int
-    class Confing:
-        from_attributes = True
-
-class ProductResponse(ProductBase):
-    id:int
+    owner_id: int
 
     class Confing:
         from_attributes = True
+
+
 
 
 
@@ -56,6 +55,15 @@ class ProductCategory(BaseModel):
 
 
 
-class ResultModel(BaseModel):
+class ResultBaseModel(BaseModel):
     status_code:int
     message: str
+
+
+class ResultModel(ResultBaseModel):
+
+    data: Optional[ProductShow]=None
+
+class ResultDataModel(ResultBaseModel):
+
+    data: Optional[ProductAllShow]=None
