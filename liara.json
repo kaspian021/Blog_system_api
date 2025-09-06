@@ -1,6 +1,6 @@
 {
-  "app": "caspian",
-  "port": 3000,
+  "app": "blogsystem",
+  "port": 80,
   "build": {
     "location": "iran"
   },
