@@ -1,8 +1,10 @@
+import re
 from datetime import timedelta
 from typing import Optional, List
 
-from pydantic import BaseModel, Field, EmailStr, field_validator
-from .product import ProductShow
+from pydantic import BaseModel, Field, EmailStr, field_validator, validator
+from .product import ProductShow, ProductShowAll
+
 
 class UserBaseModel(BaseModel):
     email: EmailStr
@@ -33,16 +35,82 @@ class UserShowAccountInfo(UserBaseModel):
         from_attributes=True
 
 
+class GeoPoint(BaseModel):
+    lat:float
+    long:float
+
+    class Config:
+        from_attributes=True
+
+
+class UserFollowing(BaseModel):
+    id:int
+    username:str
+    location: Optional[str] = None
+    image_path:Optional[str]=None
+    products: Optional[List[ProductShowAll]]=None
+
+    class Config:
+        from_attributes=True
+
+class UserFollowers(BaseModel):
+    id:int
+    username:str
+    image_path:Optional[str]=None
+    products: Optional[List[ProductShow]]=None
+    class Config:
+        from_attributes=True
+
+
+
 class UserShowAccountInfoLogin(UserBaseModel):
     id:int
     username:str
-    products: List[ProductShow]
-    token:Optional[str]=None
-    isSeller: bool
-    isLogin: Optional[bool]=True
+    image_path: Optional[str]=None
+    products: Optional[List[ProductShowAll]]=None
+    location: Optional[str] = None
+    following: Optional[List[UserFollowing]]=None
+    followers: Optional[List[UserFollowers]]=None
+    token:str
+
+
+    class Config:
+        from_attributes=True
 
 
 
+class UserInfoWithToIsSeller(UserBaseModel):
+    company_name: str
+    phone_number: str
+    image_path: str
+    location: str
+    token: str
+    is_Seller: bool
+
+    @field_validator('phone_number')
+    @classmethod
+    def validate_phone_number(cls, v):
+        pattern = re.compile(r"^(\+98|0|98)?9\d{9}$")
+        if not pattern.match(v):
+            raise ValueError("شماره تلفن معتبر نیست")
+
+        # تبدیل به فرمت استاندارد
+        cleaned = re.sub(r'[\s\-]', '', v)
+        if cleaned.startswith('0'):
+            cleaned = '+98' + cleaned[1:]
+        elif cleaned.startswith('98'):
+            cleaned = '+' + cleaned
+        elif not cleaned.startswith('+98'):
+            cleaned = '+98' + cleaned[2:] if cleaned.startswith('98') else '+98' + cleaned
+
+        return cleaned
+
+
+class UserInfoToSeller(UserBaseModel):
+    company_name:str
+    location: Optional[GeoPoint] = None
+    followers: Optional[List[UserFollowing]]=None
+    token:str
 
 
     class Config:
@@ -51,5 +119,8 @@ class UserShowAccountInfoLogin(UserBaseModel):
 
 
 
+class ResultBaseModel(BaseModel):
+    status_code:int
+    message: str
 
 

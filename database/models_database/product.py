@@ -14,9 +14,8 @@ class Products(Base):
     date= Column(Date)
     image_path= Column(String,unique=True)
     desc=Column(String)
-    category=Column(String)
     like=Column(Integer,index=True)
     owner_id= Column(Integer,ForeignKey('users.id'),index=True)
     owner= relationship('Users',back_populates='products',lazy='select') # ارتباط بین پارامتر در table users و table products با استفاده از relationship , back_populates
-
+    categoryId= Column(Integer,ForeignKey('category.id'),index=True)
 

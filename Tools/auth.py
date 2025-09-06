@@ -6,8 +6,15 @@ from fastapi import HTTPException, status
 from jose import jwt, JWTError
 from passlib.context import CryptContext
 from settings import settings
+import redis
 
-
+redis_client = redis.Redis(
+    host='localhost',
+    port=6379,         # پورت پیش‌فرض Redis
+    db=0,              # شماره دیتابیس (0 تا 15)
+    decode_responses=True,  # پاسخ‌ها را به صورت string برگرداند
+    password=None
+)
 
 
 pws_context = CryptContext(schemes=['sha256_crypt'], deprecated='auto')
@@ -34,7 +41,7 @@ def verify_password(password_current, password_hash: str):
     return pws_context.verify(password_current, password_hash)
 
 
-def create_token(data: dict, expire: Optional[timedelta] = None) -> str:
+async def create_token(data: dict, expire: Optional[timedelta] = None) -> str:
     """
     create token in api create_account api Users
 
@@ -88,8 +95,13 @@ def verify_token_user(token: str):
                                 detail='توکنی پیدا نشد لطفا دوباره لاگین کنید')
 
         result_email = jwt_result.get('email')
+        result_role = jwt_result.get('role',[])
+        result= {
+            'email': result_email,
+            "roles": result_role
+        }
 
-        return result_email
+        return result
 
     except JWTError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f'Error {e}')
@@ -98,3 +110,34 @@ def verify_token_user(token: str):
         print(e)
         raise HTTPException(status_code=500, detail='Error Server response')
 
+
+async def remove_token(token:str):
+
+    try:
+
+        pyload= jwt.decode(token,settings.SECRET_KEY,settings.ALGORITHM)
+
+        exp= pyload.get('expire')
+
+        if exp:
+
+            exp_time = datetime.datetime.fromtimestamp(exp)
+            current_time= datetime.datetime.now()
+
+            ttl_time= (current_time - exp_time).total_seconds()
+
+            if ttl_time > 0:
+
+                await redis_client.setex(
+                    f'blacklist: {token}',
+                    timedelta(seconds=ttl_time),
+                    'remove'
+                )
+
+                print(f"Token revoked. Will expire in {ttl_time} seconds")
+            else:
+                print("Token already expired, no need to revoke")
+
+    except JWTError as e:
+        print(f"Invalid token: {e}")
+            
