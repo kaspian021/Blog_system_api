@@ -131,6 +131,7 @@ def get_current_admin_token(db: Session = Depends(get_session),
 
     """
     authentication swagger in validate and return result -> Token model
+    :param credentials:
     :param token:
     :param db: database.session can you query.(Users database) // Depends(get_session to Tools.dependence)
     :return: information jwt
