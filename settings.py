@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     """
     DATABASE_URL:str = os.getenv('DATABASE_URL','sqlite:///./sql_app.db')
 
-    SECRET_KEY:str = os.getenv('SECRET_KEY')
+    SECRET_KEY:str = os.getenv('SECRET_KEY','')
 
 
     ALGORITHM:str= os.getenv('ALGORITHM','HS256')
