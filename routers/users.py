@@ -163,7 +163,8 @@ async def login_user(user_item: users.UserLoginAccount, db: Session = Depends(de
             products=show_product,
             following=following,
             followers=followers,
-            location=query.location
+            location=query.location,
+            is_Seller=query.is_Seller
         )
 
         return user_item

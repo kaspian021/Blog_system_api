@@ -66,11 +66,12 @@ class UserFollowers(BaseModel):
 class UserShowAccountInfoLogin(UserBaseModel):
     id:int
     username:str
-    image_path: Optional[str]=None
+    image_path: Optional[str]=''
     products: Optional[List[ProductShowAll]]=None
-    location: Optional[str] = None
+    location: Optional[str] = ''
     following: Optional[List[UserFollowing]]=None
     followers: Optional[List[UserFollowers]]=None
+    is_Seller: bool
     token:str
 
 
