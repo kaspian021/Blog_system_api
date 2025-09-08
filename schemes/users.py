@@ -71,7 +71,7 @@ class UserShowAccountInfoLogin(UserBaseModel):
     location: Optional[str] = ''
     following: Optional[List[UserFollowing]]=None
     followers: Optional[List[UserFollowers]]=None
-    is_Seller: bool
+    is_Seller: Optional[bool]=False
     token:str
 
 
