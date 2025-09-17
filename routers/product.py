@@ -1,4 +1,6 @@
-from fastapi import HTTPException, Depends, APIRouter
+import uuid
+
+from fastapi import HTTPException, Depends, APIRouter, UploadFile,File
 from sqlalchemy.orm import Session
 from Tools.dependence import get_session, get_current_seller_token
 from schemes import product as product
@@ -8,42 +10,96 @@ from schemes.product import ShowCategory
 
 routerProduct = APIRouter()
 
+from fastapi import APIRouter, HTTPException, File, UploadFile, Form, Depends
+from sqlalchemy.orm import Session
+import uuid
+import json
+from pydantic import parse_obj_as
+
+
 
 @routerProduct.post('/product/create_products', response_model=product.ResultModel)
-async def create_product(product_item: product.ProductCreate, db: Session = Depends(get_session),
-                         current_user=Depends(get_current_seller_token)):
+async def create_product(
+        product_item_str: str = Form(...),
+        file: UploadFile = File(...),
+        db: Session = Depends(get_session),
+        current_user=Depends(get_current_seller_token)
+):
     try:
-        if product_item is not None:
-            exist_database = db.query(models_database.Products).filter(
-                models_database.Products.image_path == product_item.image_path).first()
-            if exist_database:
-                raise HTTPException(status_code=400, detail='product with image_path already exist')
+        # تبدیل رشته JSON به مدل Pydantic
+        product_data = json.loads(product_item_str)
+        product_item = parse_obj_as(product.ProductCreate, product_data)
 
-            category_result = db.query(category.Category).filter_by(id= product_item.categoryId).first()
+        # بررسی وجود محصول با image_path یکسان
+        exist_database = db.query(models_database.Products).filter(
+            models_database.Products.image_path == product_item.image_path).first()
+        if exist_database:
+            raise HTTPException(status_code=400, detail='product with image_path already exist')
 
-            if not category_result:
-                raise HTTPException(status_code=200,detail='همچین دسته بندی نداریم لطفا یک دسته بندی مناسب انتخاب کنید')
+        # بررسی وجود دسته‌بندی
+        category_result0 = db.query(category.Category).filter_by(id=product_item.categoryId).first()
+        if not category_result0:
+            raise HTTPException(status_code=200, detail='همچین دسته بندی نداریم لطفا یک دسته بندی مناسب انتخاب کنید')
 
+        # پردازش فایل آپلود شده
+        extension_file = file.filename.split('.')[-1]
+        file_path = f'{uuid.uuid4()}.{extension_file}'
 
-            product_result= models_database.Products(**product_item.model_dump())
-            db.add(product_result)
-            db.commit()
-            db.refresh(product_result)
-            product_result_show = product.ProductShow(id=product_result.id,
-                                               name=product_result.name,
-                                               price=product_result.price,
-                                               image_path=product_result.image_path, date=product_result.date,
-                                               writer=product_result.writer, desc=product_result.desc,
-                                               category= ShowCategory(id=category_result.id,title=category_result.title,image=category_result.image), like=product_result.like,
-                                               owner_id=product_result.owner_id
-                                               )
-            return product.ResultModel(status_code=200, message='عملیات با موفقیت انجام شد', data=product_result_show)
+        content = await file.read()
 
+        with open(file_path, 'wb') as f:
+            f.write(content)
+
+        # ایجاد محصول جدید
+        result_product_show = product.ProductCreate(
+            image_path=file_path,
+            categoryId=product_item.categoryId,
+            owner_id=product_item.owner_id,
+            name=product_item.name,
+            writer=product_item.writer,
+            price=product_item.price,
+            desc=product_item.desc,
+            like=product_item.like,
+            date=product_item.date
+        )
+
+        product_result = models_database.Products(**result_product_show.dict())
+        db.add(product_result)
+        db.commit()
+        db.refresh(product_result)
+
+        # ساخت response
+        product_result_show = product.ProductShow(
+            id=product_result.id,
+            name=product_result.name,
+            price=product_result.price,
+            image_path=product_result.image_path,
+            date=product_result.date,
+            writer=product_result.writer,
+            desc=product_result.desc,
+            category=ShowCategory(
+                id=category_result0.id,
+                title=category_result0.title,
+                image=category_result0.image
+            ),
+            like=product_result.like,
+            owner_id=product_result.owner_id
+        )
+
+        return product.ResultModel(
+            status_code=200,
+            message='عملیات با موفقیت انجام شد',
+            data=product_result_show
+        )
+
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=422, detail="Invalid JSON format in product_item")
     except HTTPException:
         raise
     except Exception as e:
         print(f'Error: {e}')
-        HTTPException(status_code=500, detail='Error server')
+        raise HTTPException(status_code=500, detail='Error server')
+
 
 
 @routerProduct.get('/product/product_show/{product_id}', response_model=product.ResultModel)

@@ -36,7 +36,7 @@ class ListCategory(BaseModel):
 
 
 class ProductCreate(ProductBase):
-    image_path: str
+    image_path: Optional[str]=None
     desc:str
     like:int
     categoryId:int
