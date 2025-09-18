@@ -1,3 +1,4 @@
+import os
 import uuid
 
 from fastapi import HTTPException, Depends, APIRouter, UploadFile,File
@@ -44,10 +45,12 @@ async def create_product(
         # پردازش فایل آپلود شده
         extension_file = file.filename.split('.')[-1]
         file_path = f'{uuid.uuid4()}.{extension_file}'
+        file_upload = os.path.join('FilesImage',file_path)
+
 
         content = await file.read()
 
-        with open(file_path, 'wb') as f:
+        with open(file_upload, 'wb') as f:
             f.write(content)
 
         # ایجاد محصول جدید
