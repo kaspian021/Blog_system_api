@@ -9,7 +9,7 @@ from schemes.users import UserFollowing
 router = APIRouter(tags=['Home'])
 
 
-@router.get('/homePage', response_model=HomeModel)
+@router.get('/homePage/{user_id}', response_model=HomeModel)
 def get_homepage(user_id: int = None, db: Session = Depends(get_session)):
     try:
 
