@@ -1,21 +1,22 @@
 import os
 import uuid
 
-from fastapi import HTTPException, Depends, APIRouter, UploadFile,File
+from fastapi import HTTPException, Depends, APIRouter, UploadFile,File,Form
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from Tools.dependence import get_session, get_current_seller_token
 from schemes import product as product
 from database.models_database import product as models_database
 from database.models_database import users ,category
 from schemes.product import ShowCategory
-
-routerProduct = APIRouter()
-
-from fastapi import APIRouter, HTTPException, File, UploadFile, Form, Depends
 from sqlalchemy.orm import Session
 import uuid
 import json
 from pydantic import parse_obj_as
+
+
+routerProduct = APIRouter()
+
 
 
 
@@ -53,6 +54,9 @@ async def create_product(
         with open(file_upload, 'wb') as f:
             f.write(content)
 
+
+        image_url = f'https://blog-system-api.onrender.com/images/{file_path}'
+
         # ایجاد محصول جدید
         result_product_show = product.ProductCreate(
             image_path=file_path,
@@ -76,7 +80,7 @@ async def create_product(
             id=product_result.id,
             name=product_result.name,
             price=product_result.price,
-            image_path=product_result.image_path,
+            image_path=image_url,
             date=product_result.date,
             writer=product_result.writer,
             desc=product_result.desc,
@@ -102,7 +106,6 @@ async def create_product(
     except Exception as e:
         print(f'Error: {e}')
         raise HTTPException(status_code=500, detail='Error server')
-
 
 
 @routerProduct.get('/product/product_show/{product_id}', response_model=product.ResultModel)
@@ -316,6 +319,7 @@ def product_show_by_owner_id(owner_id: int, db: Session = Depends(get_session)):
     except Exception as e:
         print(e)
         raise HTTPException(status_code=500, detail=f'Error server response: {e}')
+
 
 
 @routerProduct.delete('/product_delete/{product_id}',response_model=product.ResultModel)
