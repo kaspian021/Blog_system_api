@@ -15,7 +15,7 @@ async def show_image(file_name:str):
         if not os.path.exists(file_path):
             raise HTTPException(status_code=404,detail='image not find')
 
-        extension = file_name.split(':')[-1].lower()
+        extension = file_name.split('.')[-1].lower()
 
         media_types = {
             'jpg': 'image/jpeg',

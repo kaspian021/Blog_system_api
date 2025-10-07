@@ -69,6 +69,7 @@ async def create_token(data: dict, expire: Optional[timedelta] = None) -> str:
             }
         )
 
+
         jwt_token = jwt.encode(claims=data_jwt, key=settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
         return jwt_token
@@ -80,7 +81,7 @@ async def create_token(data: dict, expire: Optional[timedelta] = None) -> str:
         print(e)
 
 
-def verify_token_user(token: str):
+def verify_token_user(token: str)->dict:
     """
     token is validate model response -> TokenModel has Token
     :param token: str

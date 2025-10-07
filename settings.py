@@ -39,6 +39,9 @@ class Settings(BaseSettings):
 
     GOGGLE_CLIENT_SECRET:str = os.getenv('GOGGLE_CLIENT_SECRET','')
 
+    SUPABASE_KEY:str = os.getenv('SUPABASE_KEY')
+    SUPABASE_URL:str = os.getenv('SUPABASE_URL')
+
     #بعدا دو مورد بالا رو اضافه میکنیم
 
     TOKEN_TIME_AUTHENTICATION:int = int(os.getenv('TOKEN_TIME_AUTHENTICATION',30))

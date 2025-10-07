@@ -2,8 +2,7 @@ import os
 import uuid
 
 from fastapi import HTTPException, Depends, APIRouter, UploadFile,File,Form
-from fastapi.responses import FileResponse
-from sqlalchemy.orm import Session
+from FilesImage import fileManger
 from Tools.dependence import get_session, get_current_seller_token
 from schemes import product as product
 from database.models_database import product as models_database
@@ -32,34 +31,32 @@ async def create_product(
         product_data = json.loads(product_item_str)
         product_item = parse_obj_as(product.ProductCreate, product_data)
 
-        # بررسی وجود محصول با image_path یکسان
-        exist_database = db.query(models_database.Products).filter(
-            models_database.Products.image_path == product_item.image_path).first()
-        if exist_database:
-            raise HTTPException(status_code=400, detail='product with image_path already exist')
+
+        # exist_database = db.query(models_database.Products).filter(
+        #     models_database.Products.image_path == product_item.image_path).first()
+        # if exist_database:
+        #     raise HTTPException(status_code=400, detail='product with image_path already exist')
 
         # بررسی وجود دسته‌بندی
         category_result0 = db.query(category.Category).filter_by(id=product_item.categoryId).first()
         if not category_result0:
             raise HTTPException(status_code=200, detail='همچین دسته بندی نداریم لطفا یک دسته بندی مناسب انتخاب کنید')
 
+
+
+        SUPABASE_BUCKET = 'product_image'
+
         # پردازش فایل آپلود شده
         extension_file = file.filename.split('.')[-1]
         file_path = f'{uuid.uuid4()}.{extension_file}'
-        file_upload = os.path.join('FilesImage',file_path)
+
 
 
         content = await file.read()
-
-        with open(file_upload, 'wb') as f:
-            f.write(content)
-
-
-        image_url = f'https://blog-system-api.onrender.com/images/{file_path}'
-
+        image_url = await fileManger.upload_image(SUPABASE_BUCKET,file_path, content, file)
         # ایجاد محصول جدید
         result_product_show = product.ProductCreate(
-            image_path=file_path,
+            image_path=image_url,
             categoryId=product_item.categoryId,
             owner_id=product_item.owner_id,
             name=product_item.name,

@@ -4,6 +4,10 @@ from routers import product,users,homePage,privetAdmin,Files
 
 
 app = FastAPI()
+@app.get('/')
+def root():
+    return {'message': 'welcome to api BlogSystem'}
+
 app.include_router(users.router_users,tags=['Users'])
 app.include_router(product.routerProduct,tags=['Product'])
 app.include_router(Files.router_file,tags=['Files'])
