@@ -151,15 +151,15 @@ async def product_update(product_item: product.ProductUpdate, product_id: int, d
                 if exist:
                     raise HTTPException(status_code=400, detail='image path is exist already')
 
-            update_product = product_item.model_dump(exclude_unset=True)
-            for key, value in update_product.items():
-                setattr(query, key, value)
-
             if product_item.categoryId :
                 category_result = db.query(category.Category).filter_by(id= product_item.categoryId)
 
                 if not category_result:
                     raise HTTPException(status_code=200,detail='دسته بندی که شما انتخاب کردید وجود ندارد!!')
+
+            update_product = product_item.model_dump(exclude_unset=True)
+            for key, value in update_product.items():
+                setattr(query, key, value)
 
             db.commit()
             db.refresh(query)
