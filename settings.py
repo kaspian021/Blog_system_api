@@ -46,7 +46,11 @@ class Settings(BaseSettings):
 
     TOKEN_TIME_AUTHENTICATION:int = int(os.getenv('TOKEN_TIME_AUTHENTICATION',30))
 
-
+    print("Environment variables:")
+    print("DATABASE_URL:", DATABASE_URL)
+    print("SUPABASE_KEY:", SUPABASE_KEY)
+    print("SUPABASE_URL:", SUPABASE_URL)
+    print("SECRET_KEY:", SECRET_KEY)
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
