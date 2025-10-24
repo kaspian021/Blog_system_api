@@ -1,3 +1,4 @@
+import os
 
 import uvicorn
 from fastapi.security import HTTPAuthorizationCredentials,HTTPBearer
@@ -7,6 +8,11 @@ bearer_scheme = HTTPBearer(auto_error=False,scheme_name='Bearer: ',bearerFormat=
 setup_relationship()
 
 if __name__ =='__main__':
+    print("Environment variables:")
+    print("DATABASE_URL:", os.getenv('DATABASE_URL'))
+    print("SUPABASE_KEY:", os.getenv('SUPABASE_KEY'))
+    print("SUPABASE_URL:", os.getenv('SUPABASE_URL'))
+    print("SECRET_KEY:", os.getenv('SECRET_KEY'))
     uvicorn.run('config:app',port=8000,reload=True)
 
 
